@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Social revamp: message page & dock -->
+    <string name="social_friends_messages">Friends messages</string>
+    <string name="social_tag_1">Tag 1</string>
+    <string name="social_tag_2">Tag 2</string>
+    <string name="social_tag_3">Tag 3</string>
+    <string name="social_network_bad">Network unavailable</string>
+    <string name="social_network_settings">Network settings</string>
+    <string name="social_message_placeholder">Conversation list will be shown here (TODO)</string>
+
+    <string name="social_dock_contacts">Contacts</string>
+    <string name="social_dock_group_chats">Group chats</string>
+    <string name="social_dock_groups">Groups</string>
+    <string name="social_dock_search">Search</string>
+    <string name="social_dock_menu">Menu</string>
+    <string name="social_dock_back">Back</string>
+    <string name="social_contacts_placeholder">Contacts page (placeholder)</string>
+    <string name="social_group_chats_placeholder">Group chats page (placeholder)</string>
+    <string name="social_groups_placeholder">Groups page (placeholder)</string>
+</resources>
+
+

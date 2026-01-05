@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home">主页</string>
+    <string name="category">分类</string>
+    <string name="cart">购物车</string>
+    <string name="me">我的</string>
+    <string name="edit">编辑</string>
+    <string name="complete">完成</string>
+    <string name="delete">删除</string>
+    <string name="delete_count">删除(%d)</string>
+    <string name="select_all">全选</string>
+    <string name="total">合计:</string>
+    <string name="price">¥%.2f</string>
+    <string name="settle_account">结算</string>
+    <string name="settle_account_count">结算(%d)</string>
+
+    <!-- 社交改造：消息页与 dock -->
+    <string name="social_friends_messages">好友相关消息</string>
+    <string name="social_tag_1">标识一</string>
+    <string name="social_tag_2">标识二</string>
+    <string name="social_tag_3">标识三</string>
+    <string name="social_network_bad">当前网络连接不可用</string>
+    <string name="social_network_settings">网络设置</string>
+    <string name="social_message_placeholder">这里将展示会话列表（后续接入）</string>
+
+    <string name="social_dock_contacts">联系人</string>
+    <string name="social_dock_group_chats">群聊</string>
+    <string name="social_dock_groups">分组</string>
+    <string name="social_dock_search">搜索</string>
+    <string name="social_dock_menu">抽屉</string>
+    <string name="social_dock_back">返回</string>
+    <string name="social_contacts_placeholder">联系人页面（占位）</string>
+    <string name="social_group_chats_placeholder">群聊页面（占位）</string>
+    <string name="social_groups_placeholder">分组页面（占位）</string>
+</resources>
