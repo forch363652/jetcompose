@@ -32,4 +32,8 @@
     <string name="social_contacts_placeholder">联系人页面（占位）</string>
     <string name="social_group_chats_placeholder">群聊页面（占位）</string>
     <string name="social_groups_placeholder">分组页面（占位）</string>
+    <string name="social_dock_placeholder">好友、群聊、聊天记录</string>
+    <string name="social_three_lines">三条</string>
+    <string name="social_network_error_message">当前网络连接不可用，请检查网络设置</string>
+    <string name="social_add_button">添加</string>
 </resources>

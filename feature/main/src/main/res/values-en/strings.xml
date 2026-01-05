@@ -18,6 +18,10 @@
     <string name="social_contacts_placeholder">Contacts page (placeholder)</string>
     <string name="social_group_chats_placeholder">Group chats page (placeholder)</string>
     <string name="social_groups_placeholder">Groups page (placeholder)</string>
+    <string name="social_dock_placeholder">Friends, Group chats, Chat history</string>
+    <string name="social_three_lines">Three Lines</string>
+    <string name="social_network_error_message">Network connection unavailable, please check network settings</string>
+    <string name="social_add_button">Add</string>
 </resources>
 
 

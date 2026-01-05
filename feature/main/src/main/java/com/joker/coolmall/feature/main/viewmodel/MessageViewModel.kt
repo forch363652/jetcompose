@@ -15,7 +15,6 @@ import javax.inject.Inject
 class MessageViewModel @Inject constructor(
     networkMonitor: NetworkMonitor,
 ) : ViewModel() {
-
     /**
      * 网络状态（用于顶部提示条）
      */
@@ -25,9 +24,8 @@ class MessageViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = NetworkStatus.Available,
         )
-
     /**
-     * 连接状态（后续接入你的 IM SDK / WebSocket / MQTT 等）
+     * 连接状态（后续接入 IM SDK / WebSocket / MQTT 等）
      */
     private val _connectionState = MutableStateFlow(ConnectionState.Connected)
     val connectionState: StateFlow<ConnectionState> = _connectionState
