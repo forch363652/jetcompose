@@ -83,6 +83,8 @@ dependencies {
     implementation(project(":core:data"))
     // 首页模块
     implementation(project(":feature:main"))
+    // 我的（抽屉）模块
+    implementation(project(":feature:me"))
     // 商品模块
     implementation(project(":feature:goods"))
     // 登录(认证)模块

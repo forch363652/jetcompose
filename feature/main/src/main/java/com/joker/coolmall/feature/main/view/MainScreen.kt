@@ -5,7 +5,9 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -40,17 +43,14 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -81,6 +81,10 @@ import com.joker.coolmall.feature.main.R
 import com.joker.coolmall.feature.main.viewmodel.ConnectionState
 import com.joker.coolmall.feature.main.viewmodel.MainViewModel
 import com.joker.coolmall.feature.main.viewmodel.MessageViewModel
+import com.joker.coolmall.feature.contacts.view.ContactsPagerScreen
+import com.joker.coolmall.feature.groupchats.view.GroupChatsPagerScreen
+import com.joker.coolmall.feature.groups.view.GroupsPagerScreen
+import com.joker.coolmall.feature.me.view.MeDrawerContent
 import kotlinx.coroutines.launch
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -91,7 +95,8 @@ import androidx.compose.animation.AnimatedVisibility
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun MainRoute(
-    viewModel: MainViewModel = hiltViewModel()
+    viewModel: MainViewModel = hiltViewModel(),
+    onNavigate: (String) -> Unit = {},
 ) {
     val isDockExpanded by viewModel.isDockExpanded.collectAsState()
     val dockPageIndex by viewModel.dockPageIndex.collectAsState()
@@ -103,6 +108,7 @@ internal fun MainRoute(
         onCloseDock = viewModel::closeDock,
         onDockPageSelected = viewModel::selectDockPage,
         onDockPageChangedBySwipe = viewModel::setDockPageIndex,
+        onNavigate = onNavigate,
     )
 }
 
@@ -121,6 +127,7 @@ internal fun MainScreen(
     onCloseDock: () -> Unit = {},
     onDockPageSelected: (Int) -> Unit = {},
     onDockPageChangedBySwipe: (Int) -> Unit = {},
+    onNavigate: (String) -> Unit = {},
 ) {
     // 协程作用域
     val scope = rememberCoroutineScope()
@@ -134,6 +141,9 @@ internal fun MainScreen(
         keyboard?.hide()
         focusManager.clearFocus()
     }
+
+    // “我的”抽屉（右侧）开关
+    var isMeDrawerOpen by rememberSaveable { mutableStateOf(false) }
 
     // dock 展开时，系统返回键回到消息页
     BackHandler(enabled = isDockExpanded) {
@@ -166,6 +176,7 @@ internal fun MainScreen(
     // Dock 显示/隐藏状态（根据滚动状态控制）
     var isDockVisible by remember { mutableStateOf(true) }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         // 排除顶部导航栏边距
         contentWindowInsets = ScaffoldDefaults
@@ -241,6 +252,7 @@ internal fun MainScreen(
             if (!isDockExpanded) {
                 // 消息页（好友相关消息）
                 MessageRouteWrapper(
+                    onOpenMeDrawer = { isMeDrawerOpen = true },
                     onScrollStateChange = { isScrollingDown ->
                         // 向下滚动时隐藏 Dock，向上滚动或顶部时显示 Dock
                         isDockVisible = !isScrollingDown
@@ -274,13 +286,70 @@ internal fun MainScreen(
                     modifier = Modifier.fillMaxSize()
                 ) { page ->
                     when (page) {
-                        MainViewModel.DockPage.CONTACTS.ordinal -> ContactsScreen()
-                        MainViewModel.DockPage.GROUP_CHATS.ordinal -> GroupChatsScreen()
-                        MainViewModel.DockPage.GROUPS.ordinal -> GroupsScreen()
+                        MainViewModel.DockPage.CONTACTS.ordinal -> ContactsPagerScreen()
+                        MainViewModel.DockPage.GROUP_CHATS.ordinal -> GroupChatsPagerScreen()
+                        MainViewModel.DockPage.GROUPS.ordinal -> GroupsPagerScreen()
                     }
                 }
             }
         }
+    }
+
+    // 右侧 Drawer：点击头像 / 右上角按钮打开（B1：push 到二级页面）
+    AnimatedVisibility(
+        visible = isMeDrawerOpen,
+        enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(160)),
+        exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(160)),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // 背景遮罩（点击关闭）
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.18f))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) {
+                    isMeDrawerOpen = false
+                }
+        )
+    }
+
+    AnimatedVisibility(
+        visible = isMeDrawerOpen,
+        enter = slideInHorizontally(
+            initialOffsetX = { it },
+            animationSpec = androidx.compose.animation.core.tween(220)
+        ) + fadeIn(animationSpec = androidx.compose.animation.core.tween(160)),
+        exit = slideOutHorizontally(
+            targetOffsetX = { it },
+            animationSpec = androidx.compose.animation.core.tween(220)
+        ) + fadeOut(animationSpec = androidx.compose.animation.core.tween(120)),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp,
+                shape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(0.78f)
+            ) {
+                MeDrawerContent(
+                    modifier = Modifier.fillMaxSize(),
+                    onItemClick = { route ->
+                        isMeDrawerOpen = false
+                        onNavigate(route)
+                    }
+                )
+            }
+        }
+    }
     }
 }
 
@@ -734,77 +803,6 @@ private fun ExpandedDockBar(
     }
 }
 
-@Composable
-private fun ContactsScreen() {
-    SimpleTopPage(
-        title = stringResource(id = R.string.social_dock_contacts),
-        bodyText = stringResource(id = R.string.social_contacts_placeholder),
-    )
-}
-
-@Composable
-private fun GroupChatsScreen() {
-    SimpleTopPage(
-        title = stringResource(id = R.string.social_dock_group_chats),
-        bodyText = stringResource(id = R.string.social_group_chats_placeholder),
-    )
-}
-
-@Composable
-private fun GroupsScreen() {
-    SimpleTopPage(
-        title = stringResource(id = R.string.social_dock_groups),
-        bodyText = stringResource(id = R.string.social_groups_placeholder),
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SimpleTopPage(
-    title: String,
-    bodyText: String,
-) {
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                ),
-                actions = {
-                    // 预留：后续可放“新建/添加”等入口
-                    IconButton(onClick = {}) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null
-                        )
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(padding),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = bodyText,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
-        }
-    }
-}
-
 /**
  * MessageRoute 包装器（解决 internal 访问问题）
  * 由于 MessageRoute 是 internal 的，在同一包内应该可以访问，但为了确保兼容性，使用包装器
@@ -812,6 +810,7 @@ private fun SimpleTopPage(
 @Composable
 private fun MessageRouteWrapper(
     viewModel: MessageViewModel = hiltViewModel(),
+    onOpenMeDrawer: () -> Unit = {},
     onScrollStateChange: (Boolean) -> Unit = {},
 ) {
     val networkStatus by viewModel.networkStatus.collectAsStateWithLifecycle()
@@ -823,6 +822,7 @@ private fun MessageRouteWrapper(
         connectionState = connectionState,
         isSyncing = isSyncing,
         onOpenNetworkSettings = {}, // TODO: 如需自定义设置入口，可在此注入
+        onOpenMeDrawer = onOpenMeDrawer,
         onScrollStateChange = onScrollStateChange,
     )
 }

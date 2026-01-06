@@ -1,0 +1,16 @@
+R_DEF: Internal format may change without notice
+local
+string me_drawer_account_security
+string me_drawer_favorites
+string me_drawer_moments
+string me_drawer_notifications
+string me_drawer_privacy
+string me_drawer_settings
+string me_drawer_status
+string me_placeholder_account_security
+string me_placeholder_favorites
+string me_placeholder_moments
+string me_placeholder_notifications
+string me_placeholder_privacy
+string me_placeholder_settings
+string me_placeholder_status

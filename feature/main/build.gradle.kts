@@ -12,6 +12,10 @@ android {
 
 dependencies {
     implementation(project(":core:network"))
+    implementation(project(":feature:me"))
+    implementation(project(":feature:contacts"))
+    implementation(project(":feature:groupchats"))
+    implementation(project(":feature:groups"))
 
     // lottie 动画
     // https://airbnb.io/lottie/#/android-compose

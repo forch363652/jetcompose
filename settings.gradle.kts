@@ -71,3 +71,11 @@ include(":feature:order")
 include(":feature:user")
 // 客服模块
 include(":feature:cs")
+
+// 我的（抽屉）模块
+include(":feature:me")
+
+// 社交：联系人 / 群聊 / 分组 模块
+include(":feature:contacts")
+include(":feature:groupchats")
+include(":feature:groups")

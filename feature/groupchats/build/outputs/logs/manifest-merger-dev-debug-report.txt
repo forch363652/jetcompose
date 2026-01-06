@@ -1,0 +1,14 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/forchan/AndroidStudioProjects/CoolMallKotlin-main/feature/groupchats/src/main/AndroidManifest.xml:2:1-13
+INJECTED from /Users/forchan/AndroidStudioProjects/CoolMallKotlin-main/feature/groupchats/src/main/AndroidManifest.xml:2:1-13
+	package
+		INJECTED from /Users/forchan/AndroidStudioProjects/CoolMallKotlin-main/feature/groupchats/src/main/AndroidManifest.xml
+uses-sdk
+INJECTED from /Users/forchan/AndroidStudioProjects/CoolMallKotlin-main/feature/groupchats/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/forchan/AndroidStudioProjects/CoolMallKotlin-main/feature/groupchats/src/main/AndroidManifest.xml
+INJECTED from /Users/forchan/AndroidStudioProjects/CoolMallKotlin-main/feature/groupchats/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /Users/forchan/AndroidStudioProjects/CoolMallKotlin-main/feature/groupchats/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/forchan/AndroidStudioProjects/CoolMallKotlin-main/feature/groupchats/src/main/AndroidManifest.xml

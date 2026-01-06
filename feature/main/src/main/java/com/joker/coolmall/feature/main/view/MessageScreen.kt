@@ -49,6 +49,8 @@ import com.joker.coolmall.core.network.monitor.NetworkStatus
 import com.joker.coolmall.feature.main.R
 import com.joker.coolmall.feature.main.viewmodel.ConnectionState
 import com.joker.coolmall.feature.main.viewmodel.MessageViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 
 /**
  * 消息页（首页）入口
@@ -57,6 +59,7 @@ import com.joker.coolmall.feature.main.viewmodel.MessageViewModel
 internal fun MessageRoute(
     viewModel: MessageViewModel = hiltViewModel(),
     onScrollStateChange: (Boolean) -> Unit = {}, // 滚动状态变化回调（true=向下滚动，false=向上滚动或顶部）
+    onOpenMeDrawer: () -> Unit = {},
 ) {
     val networkStatus by viewModel.networkStatus.collectAsStateWithLifecycle()
     val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
@@ -67,6 +70,7 @@ internal fun MessageRoute(
         connectionState = connectionState,
         isSyncing = isSyncing,
         onOpenNetworkSettings = {}, // TODO: 如需自定义设置入口，可在此注入
+        onOpenMeDrawer = onOpenMeDrawer,
         onScrollStateChange = onScrollStateChange,
     )
 }
@@ -86,6 +90,7 @@ internal fun MessageScreen(
     connectionState: ConnectionState,
     isSyncing: Boolean,
     onOpenNetworkSettings: () -> Unit,
+    onOpenMeDrawer: () -> Unit = {},
     onScrollStateChange: (Boolean) -> Unit = {}, // 滚动状态变化回调
 ) {
     val context = LocalContext.current
@@ -100,9 +105,8 @@ internal fun MessageScreen(
             MessageTopAppBar(
                 conversationCount = conversationCount,
                 showLoading = showLoading,
-                onAddClick = {
-                    // TODO: 处理添加按钮点击
-                }
+                onAvatarClick = onOpenMeDrawer,
+                onAddClick = onOpenMeDrawer, // 你确认：右上角按钮也打开“我的”抽屉
             )
         }
     ) { paddingValues ->
@@ -167,6 +171,7 @@ data class ConversationItem(
 private fun MessageTopAppBar(
     conversationCount: Int,
     showLoading: Boolean,
+    onAvatarClick: () -> Unit,
     onAddClick: () -> Unit,
 ) {
     CenterAlignedTopAppBar(
@@ -183,12 +188,21 @@ private fun MessageTopAppBar(
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
+                // 点击头像打开 Drawer
+                //（外层 Box clickable 会更贴近 iOS/微信体验）
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable { onAvatarClick() },
+                    contentAlignment = Alignment.Center
+                ) {
                 // TODO: 加载用户头像图片
                 Text(
                     text = "U",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
+                }
             }
         },
         title = {
@@ -224,7 +238,7 @@ private fun MessageTopAppBar(
             // 最右侧：+ 按钮（添加/新建）
             IconButton(onClick = onAddClick) {
                 Icon(
-                    painter = painterResource(id = android.R.drawable.ic_input_add),
+                    imageVector = Icons.Default.Add,
                     contentDescription = stringResource(id = R.string.social_add_button),
                     tint = MaterialTheme.colorScheme.onSurface
                 )

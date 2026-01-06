@@ -1,0 +1,19 @@
+<resources>
+    <string name="me_drawer_moments">Moments</string>
+    <string name="me_drawer_favorites">Favorites</string>
+    <string name="me_drawer_status">My status</string>
+    <string name="me_drawer_notifications">Notifications</string>
+    <string name="me_drawer_privacy">Privacy</string>
+    <string name="me_drawer_account_security">Account security</string>
+    <string name="me_drawer_settings">Settings</string>
+
+    <string name="me_placeholder_moments">Moments (placeholder)</string>
+    <string name="me_placeholder_favorites">Favorites (placeholder)</string>
+    <string name="me_placeholder_status">My status (placeholder)</string>
+    <string name="me_placeholder_notifications">Notifications (placeholder)</string>
+    <string name="me_placeholder_privacy">Privacy (placeholder)</string>
+    <string name="me_placeholder_account_security">Account security (placeholder)</string>
+    <string name="me_placeholder_settings">Settings (placeholder)</string>
+</resources>
+
+
