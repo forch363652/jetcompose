@@ -28,6 +28,9 @@ object MeRoutes {
 
     /** 通用设置 */
     const val SETTINGS = "$ME_ROUTE/settings"
+
+    /** 个人资料详情 */
+    const val PROFILE_DETAIL = "$ME_ROUTE/profile_detail"
 }
 
 

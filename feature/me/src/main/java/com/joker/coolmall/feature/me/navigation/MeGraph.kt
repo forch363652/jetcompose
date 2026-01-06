@@ -19,6 +19,9 @@ fun NavGraphBuilder.meGraph(
     privacyScreen()
     accountSecurityScreen()
     settingsScreen()
+    profileDetailScreen(
+        onBackClick = { navController.popBackStack() }
+    )
 }
 
 

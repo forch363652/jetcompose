@@ -88,6 +88,8 @@ import com.joker.coolmall.feature.me.view.MeDrawerContent
 import com.joker.coolmall.feature.me.viewmodel.MeDrawerViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 
@@ -173,6 +175,9 @@ internal fun MainScreen(
     
     // Dock 显示/隐藏状态（根据滚动状态控制）
     var isDockVisible by remember { mutableStateOf(true) }
+    
+    // 延迟显示任务（用于在滚动停止后延迟显示抽屉）
+    var showDockJob by remember { mutableStateOf<Job?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
@@ -251,9 +256,19 @@ internal fun MainScreen(
                 // 消息页（好友相关消息）
                 MessageRouteWrapper(
                     onOpenMeDrawer = { isMeDrawerOpen = true },
-                    onScrollStateChange = { isScrollingDown ->
-                        // 向下滚动时隐藏 Dock，向上滚动或顶部时显示 Dock
-                        isDockVisible = !isScrollingDown
+                    onScrollStateChange = { isScrolling ->
+                        if (isScrolling) {
+                            // 正在滚动时：取消之前的延迟显示任务，立即隐藏抽屉
+                            showDockJob?.cancel()
+                            isDockVisible = false
+                        } else {
+                            // 停止滚动时：延迟 500ms 后显示抽屉
+                            showDockJob?.cancel()
+                            showDockJob = scope.launch {
+                                delay(500) // 延迟 500ms
+                                isDockVisible = true
+                            }
+                        }
                     }
                 )
 

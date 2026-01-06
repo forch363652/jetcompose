@@ -30,9 +30,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,7 +75,7 @@ import com.joker.coolmall.feature.me.viewmodel.MeDrawerViewModel
 internal fun MessageRoute(
     viewModel: MessageViewModel = hiltViewModel(),
     meDrawerViewModel: MeDrawerViewModel = hiltViewModel(),
-    onScrollStateChange: (Boolean) -> Unit = {}, // 滚动状态变化回调（true=向下滚动，false=向上滚动或顶部）
+    onScrollStateChange: (Boolean) -> Unit = {}, // 滚动状态变化回调（true=正在滚动，false=停止滚动）
     onOpenMeDrawer: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -445,6 +449,8 @@ private fun ConversationList(
     val pullToRefreshState = rememberPullToRefreshState()
     var previousFirstVisibleItemIndex by remember { mutableIntStateOf(0) }
     var previousScrollOffset by remember { mutableIntStateOf(0) }
+    var scrollStopJob by remember { mutableStateOf<Job?>(null) }
+    var isCurrentlyScrolling by remember { mutableStateOf(false) }
     
     // 同步刷新状态到 PullToRefreshState
     LaunchedEffect(isRefreshing) {
@@ -452,26 +458,34 @@ private fun ConversationList(
         // 我们只需要在 onRefresh 回调中更新 isRefreshing 状态
     }
 
-    // 监听滚动状态变化
+    // 监听滚动状态变化（使用防抖机制）
     LaunchedEffect(listState) {
         snapshotFlow {
             Pair(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
         }.collect { (currentIndex, currentOffset) ->
-            // 判断滚动方向
-            val isScrollingDown = when {
-                // 如果 item 索引增加，肯定是向下滚动
-                currentIndex > previousFirstVisibleItemIndex -> true
-                // 如果 item 索引减少，肯定是向上滚动
-                currentIndex < previousFirstVisibleItemIndex -> false
-                // 如果 item 索引相同，比较 offset
-                else -> currentOffset > previousScrollOffset
+            // 检测是否有滚动行为（不管方向）
+            val hasScrolled = currentIndex != previousFirstVisibleItemIndex || 
+                             currentOffset != previousScrollOffset
+            
+            if (hasScrolled) {
+                // 如果有滚动行为，取消之前的停止滚动任务，通知正在滚动
+                scrollStopJob?.cancel()
+                if (!isCurrentlyScrolling) {
+                    isCurrentlyScrolling = true
+                    onScrollStateChange(true)
+                }
+                // 重置防抖计时器：延迟一段时间后检测是否真的停止滚动
+                scrollStopJob = launch {
+                    delay(150) // 延迟 150ms 检测滚动是否停止
+                    // 再次检查是否还在滚动
+                    val stillScrolling = currentIndex != listState.firstVisibleItemIndex || 
+                                       currentOffset != listState.firstVisibleItemScrollOffset
+                    if (!stillScrolling) {
+                        isCurrentlyScrolling = false
+                        onScrollStateChange(false)
+                    }
+                }
             }
-            
-            // 如果滚动到顶部，显示 Dock
-            val isAtTop = currentIndex == 0 && currentOffset == 0
-            
-            // 向下滚动且不在顶部时隐藏 Dock，否则显示 Dock
-            onScrollStateChange(isScrollingDown && !isAtTop)
             
             previousFirstVisibleItemIndex = currentIndex
             previousScrollOffset = currentOffset

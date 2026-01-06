@@ -72,8 +72,9 @@ fun MeDrawerContent(
                 avatarUrl = uiState.avatarUrl,
                 nickname = uiState.nickname,
                 userId = uiState.userId,
-            modifier = Modifier
-                .fillMaxWidth()
+                onHeaderClick = { onItemClick(com.joker.coolmall.navigation.routes.MeRoutes.PROFILE_DETAIL) },
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             )
         }
@@ -116,21 +117,23 @@ private fun DrawerHeader(
     avatarUrl: String?,
     nickname: String,
     userId: String,
+    onHeaderClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier,
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // 头像（可点击）
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .clickable(onClick = onHeaderClick),
+            contentAlignment = Alignment.Center
         ) {
-        // 头像
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
             if (avatarUrl != null && avatarUrl.isNotBlank()) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
@@ -156,11 +159,13 @@ private fun DrawerHeader(
             }
         }
 
-        // 昵称和 ID
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
+        // 昵称和 ID（可点击）
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .clickable(onClick = onHeaderClick),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
                 Text(
                     text = nickname,
                     style = MaterialTheme.typography.titleMedium,
@@ -173,7 +178,7 @@ private fun DrawerHeader(
                 )
             }
 
-        // 二维码图标
+        // 二维码图标（独立点击，不触发头部点击）
         IconButton(
             onClick = {
                 // TODO: 打开二维码页面
@@ -188,11 +193,9 @@ private fun DrawerHeader(
             )
         }
 
-        // 箭头图标
+        // 箭头图标（点击触发头部点击）
         IconButton(
-            onClick = {
-                // TODO: 打开个人资料页面
-            },
+            onClick = onHeaderClick,
             modifier = Modifier.size(24.dp)
         ) {
             Icon(

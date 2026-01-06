@@ -7,6 +7,7 @@ import com.joker.coolmall.feature.me.view.FavoritesScreen
 import com.joker.coolmall.feature.me.view.MomentsScreen
 import com.joker.coolmall.feature.me.view.NotificationsScreen
 import com.joker.coolmall.feature.me.view.PrivacyScreen
+import com.joker.coolmall.feature.me.view.ProfileDetailRoute
 import com.joker.coolmall.feature.me.view.SettingsScreen
 import com.joker.coolmall.feature.me.view.StatusScreen
 import com.joker.coolmall.navigation.routes.MeRoutes
@@ -37,6 +38,14 @@ fun NavGraphBuilder.accountSecurityScreen() {
 
 fun NavGraphBuilder.settingsScreen() {
     composable(route = MeRoutes.SETTINGS) { SettingsScreen() }
+}
+
+fun NavGraphBuilder.profileDetailScreen(
+    onBackClick: () -> Unit,
+) {
+    composable(route = MeRoutes.PROFILE_DETAIL) {
+        ProfileDetailRoute(onBackClick = onBackClick)
+    }
 }
 
 

@@ -20,6 +20,15 @@
     <string name="me_drawer_user_id_format">ID: %1$s</string>
     <string name="me_drawer_qrcode_content_description">二维码</string>
     <string name="me_drawer_arrow_content_description">个人资料</string>
+    
+    <!-- 个人资料详情页面 -->
+    <string name="me_profile_back">返回</string>
+    <string name="me_profile_phone">手机号</string>
+    <string name="me_profile_santiao_id">三条ID</string>
+    <string name="me_profile_qr_code">我的二维码</string>
+    <string name="me_profile_gender">性别</string>
+    <string name="me_profile_email">邮箱</string>
+    <string name="me_profile_location">所在地</string>
 </resources>
 
 
