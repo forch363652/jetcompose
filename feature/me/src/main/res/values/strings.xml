@@ -18,6 +18,8 @@
     <!-- 无障碍支持 -->
     <string name="me_drawer_avatar_content_description">用户头像</string>
     <string name="me_drawer_user_id_format">ID: %1$s</string>
+    <string name="me_drawer_qrcode_content_description">二维码</string>
+    <string name="me_drawer_arrow_content_description">个人资料</string>
 </resources>
 
 

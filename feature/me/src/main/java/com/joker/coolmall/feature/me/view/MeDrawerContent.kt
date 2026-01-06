@@ -20,6 +20,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -128,39 +131,77 @@ private fun DrawerHeader(
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-            if (avatarUrl != null) {
+            if (avatarUrl != null && avatarUrl.isNotBlank()) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(avatarUrl)
                         .crossfade(true)
+                        .placeholder(R.drawable.avatar_default) // 加载中显示默认头像
+                        .error(R.drawable.avatar_default) // 加载失败显示默认头像
                         .build(),
                     contentDescription = stringResource(R.string.me_drawer_avatar_content_description),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
-                // 占位：显示昵称首字母
-                Text(
-                    text = nickname.take(1).uppercase(),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                // 无头像 URL：显示默认头像
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(R.drawable.avatar_default)
+                        .build(),
+                    contentDescription = stringResource(R.string.me_drawer_avatar_content_description),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }
 
         // 昵称和 ID
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
                 Text(
-                text = nickname,
+                    text = nickname,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                text = stringResource(R.string.me_drawer_user_id_format, userId),
+                    text = stringResource(R.string.me_drawer_user_id_format, userId),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
+
+        // 二维码图标
+        IconButton(
+            onClick = {
+                // TODO: 打开二维码页面
+            },
+            modifier = Modifier.size(24.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_qrcode),
+                contentDescription = stringResource(R.string.me_drawer_qrcode_content_description),
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        // 箭头图标
+        IconButton(
+            onClick = {
+                // TODO: 打开个人资料页面
+            },
+            modifier = Modifier.size(24.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_arrow_right),
+                contentDescription = stringResource(R.string.me_drawer_arrow_content_description),
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
 
@@ -191,17 +232,30 @@ private fun DrawerItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 图标（使用设计系统的 CommonIcon，支持语义色）
-        CommonIcon(
-            imageVector = destination.icon,
-            contentDescription = stringResource(destination.labelTextId), // 无障碍支持
-            modifier = Modifier.size(20.dp),
-            tint = if (destination.selected) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            }
-        )
+        // 图标（优先使用 drawable 资源，否则使用 ImageVector）
+        if (destination.iconResId != null) {
+            Icon(
+                painter = painterResource(id = destination.iconResId),
+                contentDescription = stringResource(destination.labelTextId), // 无障碍支持
+                modifier = Modifier.size(20.dp),
+                tint = if (destination.selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
+            )
+        } else if (destination.icon != null) {
+            CommonIcon(
+                imageVector = destination.icon,
+                contentDescription = stringResource(destination.labelTextId), // 无障碍支持
+                modifier = Modifier.size(20.dp),
+                tint = if (destination.selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
+            )
+        }
 
         // 标签文本
         Text(

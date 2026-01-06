@@ -62,10 +62,11 @@ sealed interface MessageUiState {
 
         /**
          * 是否显示加载图标
-         * 条件：有内容 && 不在下拉刷新 && 没有置顶消息
+         * 条件：有内容 && 没有置顶消息
+         * 注意：下拉刷新时也会显示加载图标（在 AppBar 中），而不是使用 PullToRefreshBox 的默认指示器
          */
         val shouldShowLoadingIcon: Boolean
-            get() = conversations.isNotEmpty() && !isRefreshing && !hasPinnedMessages
+            get() = conversations.isNotEmpty() && !hasPinnedMessages
 
         /**
          * 是否显示头像
@@ -99,4 +100,5 @@ data class ConversationItem(
      */
     val isPinned: Boolean = false,
 )
+
 

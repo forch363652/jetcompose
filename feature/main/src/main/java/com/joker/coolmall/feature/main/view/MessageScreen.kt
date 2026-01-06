@@ -44,7 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.joker.coolmall.core.designsystem.theme.SpaceHorizontalSmall
@@ -153,48 +154,43 @@ internal fun MessageScreen(
                     )
                 }
             ) { paddingValues ->
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
-                    onRefresh = onRefresh,
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
+                        .background(MaterialTheme.colorScheme.background)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background)
-                    ) {
-                        // 网络异常提示 Banner（紧贴 AppBar 下方）
-                        if (showNetworkBanner) {
-                            NetworkErrorBanner(
-                                onOpenSettings = {
-                                    runCatching {
-                                        context.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS).apply {
-                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        })
-                                    }.onFailure {
-                                        onOpenNetworkSettings()
-                                    }
+                    // 网络异常提示 Banner（紧贴 AppBar 下方）
+                    if (showNetworkBanner) {
+                        NetworkErrorBanner(
+                            onOpenSettings = {
+                                runCatching {
+                                    context.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    })
+                                }.onFailure {
+                                    onOpenNetworkSettings()
                                 }
-                            )
-                        }
-
-                        // 会话列表区
-                        if (state.conversations.isNotEmpty()) {
-                            ConversationList(
-                                conversations = state.conversations,
-                                onScrollStateChange = onScrollStateChange,
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.background),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                // 空状态：不显示任何提示，保持克制
                             }
+                        )
+                    }
+
+                    // 会话列表区（支持下拉刷新）
+                    if (state.conversations.isNotEmpty()) {
+                        ConversationList(
+                            conversations = state.conversations,
+                            isRefreshing = isRefreshing,
+                            onRefresh = onRefresh,
+                            onScrollStateChange = onScrollStateChange,
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            // 空状态：不显示任何提示，保持克制
                         }
                     }
                 }
@@ -339,7 +335,7 @@ private fun MessageTopAppBarIcon(
     ) {
         // TODO: 使用实际的图标资源
         Icon(
-            painter = painterResource(id = R.drawable.ic_home_drawer_toggle_btn),
+            painter = painterResource(id = com.joker.coolmall.feature.me.R.drawable.avatar_default),
             contentDescription = stringResource(id = R.string.social_dock_menu),
             tint = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.size(20.dp)
@@ -437,14 +433,24 @@ private fun NetworkErrorBanner(
 /**
  * 会话列表
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ConversationList(
     conversations: List<ConversationItem>,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
     onScrollStateChange: (Boolean) -> Unit = {},
 ) {
     val listState = rememberLazyListState()
+    val pullToRefreshState = rememberPullToRefreshState()
     var previousFirstVisibleItemIndex by remember { mutableIntStateOf(0) }
     var previousScrollOffset by remember { mutableIntStateOf(0) }
+    
+    // 同步刷新状态到 PullToRefreshState
+    LaunchedEffect(isRefreshing) {
+        // Material3 的 pullToRefresh modifier 会自动处理刷新状态
+        // 我们只需要在 onRefresh 回调中更新 isRefreshing 状态
+    }
 
     // 监听滚动状态变化
     LaunchedEffect(listState) {
@@ -474,7 +480,13 @@ private fun ConversationList(
 
     LazyColumn(
         state = listState,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .pullToRefresh(
+                state = pullToRefreshState,
+                onRefresh = onRefresh,
+                isRefreshing = isRefreshing
+            )
     ) {
         items(conversations) { conversation ->
             ConversationItem(conversation = conversation)
