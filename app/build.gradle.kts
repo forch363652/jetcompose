@@ -85,16 +85,8 @@ dependencies {
     implementation(project(":feature:main"))
     // 我的（抽屉）模块
     implementation(project(":feature:me"))
-    // 商品模块
-    implementation(project(":feature:goods"))
     // 登录(认证)模块
     implementation(project(":feature:auth"))
-    // 用户模块
-    implementation(project(":feature:user"))
-    // 订单模块
-    implementation(project(":feature:order"))
-    // 客服模块
-    implementation(project(":feature:cs"))
     // 通用模块
     implementation(project(":feature:common"))
 

@@ -27,6 +27,7 @@
     <string name="social_dock_group_chats">群聊</string>
     <string name="social_dock_groups">分组</string>
     <string name="social_dock_search">搜索</string>
+    <string name="social_dock_clear">清除</string>
     <string name="social_dock_menu">抽屉</string>
     <string name="social_dock_back">返回</string>
     <string name="social_contacts_placeholder">联系人页面（占位）</string>
@@ -36,4 +37,5 @@
     <string name="social_three_lines">三条</string>
     <string name="social_network_error_message">当前网络连接不可用，请检查网络设置</string>
     <string name="social_add_button">添加</string>
+    <string name="social_avatar_content_description">用户头像</string>
 </resources>

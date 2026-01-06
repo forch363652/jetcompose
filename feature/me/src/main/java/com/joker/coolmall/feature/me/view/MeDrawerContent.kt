@@ -1,6 +1,5 @@
 package com.joker.coolmall.feature.me.view
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,112 +7,96 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.joker.coolmall.core.designsystem.theme.AppTheme
+import com.joker.coolmall.core.designsystem.theme.CommonIcon
 import com.joker.coolmall.feature.me.R
-import com.joker.coolmall.navigation.routes.MeRoutes
-
-data class MeDrawerItem(
-    val route: String,
-    val title: String,
-    val icon: ImageVector,
-)
+import com.joker.coolmall.feature.me.model.MeDrawerDestination
+import com.joker.coolmall.feature.me.state.MeDrawerUiState
 
 /**
- * “我的”抽屉内容（图5）
+ * “我的”抽屉内容（参考 NIA 的架构模式）
  *
- * - 该组件是纯 UI：点击项时只上抛 route，不直接依赖 NavController
+ * - 使用 UiState 模式，数据与 UI 解耦
+ * - 支持 LazyColumn 长列表
+ * - 使用设计系统的 icon 和语义色
+ * - 适配窗口内边距（windowInsetsPadding）
+ * - 提供 contentDescription 满足无障碍
  */
 @Composable
 fun MeDrawerContent(
+    uiState: MeDrawerUiState,
     modifier: Modifier = Modifier,
     onItemClick: (route: String) -> Unit,
 ) {
-    val items = listOf(
-        MeDrawerItem(MeRoutes.MOMENTS, stringResource(R.string.me_drawer_moments), Icons.Default.FavoriteBorder),
-        MeDrawerItem(MeRoutes.FAVORITES, stringResource(R.string.me_drawer_favorites), Icons.Default.Star),
-        MeDrawerItem(MeRoutes.STATUS, stringResource(R.string.me_drawer_status), Icons.Default.Info),
-        MeDrawerItem(MeRoutes.NOTIFICATIONS, stringResource(R.string.me_drawer_notifications), Icons.Default.Notifications),
-        MeDrawerItem(MeRoutes.PRIVACY, stringResource(R.string.me_drawer_privacy), Icons.Default.Lock),
-        MeDrawerItem(MeRoutes.ACCOUNT_SECURITY, stringResource(R.string.me_drawer_account_security), Icons.Default.Person),
-        MeDrawerItem(MeRoutes.SETTINGS, stringResource(R.string.me_drawer_settings), Icons.Default.Settings),
-    )
+    val destinations = uiState.updateSelectedDestinations()
 
-    Column(
+    LazyColumn(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
-            .padding(top = 48.dp, bottom = 12.dp)
+            .windowInsetsPadding(WindowInsets.statusBars) // 适配状态栏
+            .padding(bottom = 12.dp),
     ) {
-        // 头部：头像 + 昵称（占位）
-        Row(
+        // 头部：头像 + 昵称
+        item {
+            DrawerHeader(
+                avatarUrl = uiState.avatarUrl,
+                nickname = uiState.nickname,
+                userId = uiState.userId,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                // TODO: 后续替换为真实头像（Coil）
-                Text(
-                    text = "U",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = "热心网友",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "ID: 000000",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            }
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            )
         }
 
-        Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        items.forEachIndexed { index, item ->
-            DrawerRow(
-                icon = item.icon,
-                title = item.title,
-                onClick = { onItemClick(item.route) }
+        item {
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
             )
-            if (index != items.lastIndex) {
-                Divider(
+        }
+
+        // 抽屉项列表
+        items(
+            items = destinations,
+            key = { it.route }
+        ) { destination ->
+            DrawerItem(
+                destination = destination,
+                badgeCount = uiState.badgeCounts[destination.route] ?: 0,
+                onClick = { onItemClick(destination.route) },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // 分隔线（最后一项不显示）
+            if (destination != destinations.last()) {
+                HorizontalDivider(
                     modifier = Modifier.padding(start = 56.dp),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
                 )
@@ -122,32 +105,172 @@ fun MeDrawerContent(
     }
 }
 
+/**
+ * 抽屉头部（头像 + 昵称 + ID）
+ */
 @Composable
-private fun DrawerRow(
-    icon: ImageVector,
-    title: String,
-    onClick: () -> Unit,
+private fun DrawerHeader(
+    avatarUrl: String?,
+    nickname: String,
+    userId: String,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier = modifier,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+        // 头像
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+            if (avatarUrl != null) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(avatarUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = stringResource(R.string.me_drawer_avatar_content_description),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                // 占位：显示昵称首字母
+                Text(
+                    text = nickname.take(1).uppercase(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+        }
+
+        // 昵称和 ID
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                text = nickname,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                text = stringResource(R.string.me_drawer_user_id_format, userId),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+    }
+}
+
+/**
+ * 抽屉项（单个菜单项）
+ */
+@Composable
+private fun DrawerItem(
+    destination: MeDrawerDestination,
+    badgeCount: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .then(
+                if (destination.selected) {
+                    Modifier.background(
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f),
+                        shape = MaterialTheme.shapes.small
+                    )
+                } else {
+                    Modifier
+                }
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        androidx.compose.material3.Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color.Unspecified,
-            modifier = Modifier.size(20.dp)
+        // 图标（使用设计系统的 CommonIcon，支持语义色）
+        CommonIcon(
+            imageVector = destination.icon,
+            contentDescription = stringResource(destination.labelTextId), // 无障碍支持
+            modifier = Modifier.size(20.dp),
+            tint = if (destination.selected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            }
         )
+
+        // 标签文本
         Text(
-            text = title,
+            text = stringResource(destination.labelTextId),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = if (destination.selected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+            modifier = Modifier.weight(1f)
+        )
+
+        // 角标（未读数）
+        if (badgeCount > 0) {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.error),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = badgeCount.coerceAtMost(99).toString(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onError,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+        )
+    }
+}
+    }
+}
+
+// ==================== Preview ====================
+
+@Preview(name = "Light Theme", showBackground = true)
+@Preview(name = "Dark Theme", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun MeDrawerContentPreview() {
+    AppTheme {
+        MeDrawerContent(
+            uiState = MeDrawerUiState(
+                nickname = "热心网友",
+                userId = "123456",
+                destinations = MeDrawerDestination.defaultDestinations(),
+                badgeCounts = mapOf(
+                    MeDrawerDestination.defaultDestinations()[3].route to 5, // Notifications
+                )
+            ),
+            onItemClick = {}
         )
     }
 }
 
-
+@Preview(name = "Selected Item", showBackground = true)
+@Composable
+private fun MeDrawerContentSelectedPreview() {
+    AppTheme {
+        MeDrawerContent(
+            uiState = MeDrawerUiState(
+                nickname = "热心网友",
+                userId = "123456",
+                destinations = MeDrawerDestination.defaultDestinations(),
+                selectedRoute = MeDrawerDestination.defaultDestinations()[0].route, // Moments selected
+                badgeCounts = mapOf(
+                    MeDrawerDestination.defaultDestinations()[3].route to 5,
+                )
+            ),
+            onItemClick = {}
+        )
+    }
+}

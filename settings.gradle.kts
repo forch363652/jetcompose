@@ -59,18 +59,8 @@ include(":feature:main")
 include(":feature:auth")
 // 公共功能模块
 include(":feature:common")
-// 商品模块
-include(":feature:goods")
 // 启动流程模块
 include(":feature:launch")
-// 营销模块
-include(":feature:market")
-// 订单模块
-include(":feature:order")
-// 用户模块
-include(":feature:user")
-// 客服模块
-include(":feature:cs")
 
 // 我的（抽屉）模块
 include(":feature:me")

@@ -36,6 +36,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -43,32 +44,44 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.joker.coolmall.core.designsystem.theme.SpaceHorizontalSmall
 import com.joker.coolmall.core.designsystem.theme.SpacePaddingMedium
 import com.joker.coolmall.core.network.monitor.NetworkStatus
 import com.joker.coolmall.feature.main.R
+import com.joker.coolmall.feature.main.state.ConversationItem
+import com.joker.coolmall.feature.main.state.MessageUiState
 import com.joker.coolmall.feature.main.viewmodel.ConnectionState
 import com.joker.coolmall.feature.main.viewmodel.MessageViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import com.joker.coolmall.feature.me.viewmodel.MeDrawerViewModel
 
 /**
- * 消息页（首页）入口
+ * 消息页（首页）入口（参考 NIA 架构）
+ *
+ * - 收集 MessageUiState
+ * - 处理下拉刷新等副作用
+ * - 传递状态和事件回调给 UI 组件
  */
 @Composable
 internal fun MessageRoute(
     viewModel: MessageViewModel = hiltViewModel(),
+    meDrawerViewModel: MeDrawerViewModel = hiltViewModel(),
     onScrollStateChange: (Boolean) -> Unit = {}, // 滚动状态变化回调（true=向下滚动，false=向上滚动或顶部）
     onOpenMeDrawer: () -> Unit = {},
 ) {
-    val networkStatus by viewModel.networkStatus.collectAsStateWithLifecycle()
-    val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
-    val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val meDrawerUiState by meDrawerViewModel.uiState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     MessageScreen(
-        networkStatus = networkStatus,
-        connectionState = connectionState,
-        isSyncing = isSyncing,
+        uiState = uiState,
+        avatarUrl = meDrawerUiState.avatarUrl,
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.refresh() },
         onOpenNetworkSettings = {}, // TODO: 如需自定义设置入口，可在此注入
         onOpenMeDrawer = onOpenMeDrawer,
         onScrollStateChange = onScrollStateChange,
@@ -76,133 +89,195 @@ internal fun MessageRoute(
 }
 
 /**
- * 消息页（好友相关消息）
+ * 消息页（好友相关消息）（参考 NIA 架构）
  *
  * 页面结构（从上到下）：
- * - 顶部 AppBar（固定）：左侧头像、中间标题（三条+数字）、右侧状态图标、最右侧+按钮
+ * - 顶部 AppBar（固定）：根据状态动态切换显示（图标模式/头像模式）
  * - 网络异常提示 Banner（条件显示）：紧贴 AppBar 下方
- * - 会话列表区（可滚动）
+ * - 会话列表区（可滚动，支持下拉刷新）
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MessageScreen(
-    networkStatus: NetworkStatus,
-    connectionState: ConnectionState,
-    isSyncing: Boolean,
+    uiState: MessageUiState,
+    avatarUrl: String? = null,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
     onOpenNetworkSettings: () -> Unit,
     onOpenMeDrawer: () -> Unit = {},
     onScrollStateChange: (Boolean) -> Unit = {}, // 滚动状态变化回调
 ) {
     val context = LocalContext.current
-    val showLoading = isSyncing || connectionState == ConnectionState.Connecting
-    val showNetworkBanner = networkStatus is NetworkStatus.Unavailable
-    // TODO: 从 ViewModel 获取会话数量和会话列表
-    val conversationCount = 0 // 临时值，后续从 ViewModel 获取
-    val conversations = emptyList<ConversationItem>() // 临时空列表，后续从 ViewModel 获取
-
-    Scaffold(
-        topBar = {
-            MessageTopAppBar(
-                conversationCount = conversationCount,
-                showLoading = showLoading,
-                onAvatarClick = onOpenMeDrawer,
-                onAddClick = onOpenMeDrawer, // 你确认：右上角按钮也打开“我的”抽屉
-            )
+    
+    when (val state = uiState) {
+        is MessageUiState.Loading -> {
+            // 加载中状态
+            Scaffold(
+                topBar = {
+                    MessageTopAppBar(
+                        conversationCount = 0,
+                        showLoadingIcon = false,
+                        showAvatar = false,
+                        avatarUrl = null,
+                        onIconClick = onOpenMeDrawer,
+                        onAvatarClick = onOpenMeDrawer,
+                        onAddClick = onOpenMeDrawer,
+                    )
+                }
+            ) { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .background(MaterialTheme.colorScheme.background),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // 加载中提示
+                }
+            }
         }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            // 网络异常提示 Banner（紧贴 AppBar 下方）
-            if (showNetworkBanner) {
-                NetworkErrorBanner(
-                    onOpenSettings = {
-                        runCatching {
-                            context.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS).apply {
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            })
-                        }.onFailure {
-                            onOpenNetworkSettings()
+        
+        is MessageUiState.Success -> {
+            val showNetworkBanner = state.networkStatus is NetworkStatus.Unavailable
+
+            Scaffold(
+                topBar = {
+                    MessageTopAppBar(
+                        conversationCount = state.conversationCount,
+                        showLoadingIcon = state.shouldShowLoadingIcon,
+                        showAvatar = state.shouldShowAvatar,
+                        avatarUrl = if (state.shouldShowAvatar) avatarUrl else null,
+                        onIconClick = onOpenMeDrawer,
+                        onAvatarClick = onOpenMeDrawer,
+                        onAddClick = onOpenMeDrawer,
+                    )
+                }
+            ) { paddingValues ->
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = onRefresh,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
+                    ) {
+                        // 网络异常提示 Banner（紧贴 AppBar 下方）
+                        if (showNetworkBanner) {
+                            NetworkErrorBanner(
+                                onOpenSettings = {
+                                    runCatching {
+                                        context.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS).apply {
+                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        })
+                                    }.onFailure {
+                                        onOpenNetworkSettings()
+                                    }
+                                }
+                            )
+                        }
+
+                        // 会话列表区
+                        if (state.conversations.isNotEmpty()) {
+                            ConversationList(
+                                conversations = state.conversations,
+                                onScrollStateChange = onScrollStateChange,
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.background),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                // 空状态：不显示任何提示，保持克制
+                            }
                         }
                     }
-                )
+                }
             }
-
-            // 会话列表区
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
-                contentAlignment = Alignment.Center
-            ) {
-                // 空状态：不显示任何提示，保持克制
+        }
+        
+        is MessageUiState.Error -> {
+            // 错误状态
+            Scaffold(
+                topBar = {
+                    MessageTopAppBar(
+                        conversationCount = 0,
+                        showLoadingIcon = false,
+                        showAvatar = false,
+                        avatarUrl = null,
+                        onIconClick = onOpenMeDrawer,
+                        onAvatarClick = onOpenMeDrawer,
+                        onAddClick = onOpenMeDrawer,
+                    )
+                }
+            ) { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .background(MaterialTheme.colorScheme.background),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // 错误提示
+                }
             }
         }
     }
 }
 
-/**
- * 会话项数据类（临时，后续从 Room/API 获取）
- */
-data class ConversationItem(
-    val id: String,
-    val name: String,
-    val avatarUrl: String? = null,
-    val lastMessage: String,
-    val timestamp: Long,
-    val unreadCount: Int = 0,
-    val isGroup: Boolean = false
-)
+// ConversationItem 已移至 feature/main/state/MessageUiState.kt
 
 /**
- * 消息页顶部 AppBar
+ * 消息页顶部 AppBar（参考 NIA 架构）
  *
- * 结构（从左到右）：
- * - 左侧：用户头像（圆形）
- * - 中间：标题"三条(数字)"，数字表示未读/会话数量
- * - 标题右侧：状态图标（loading/同步中，可选）
- * - 最右侧：+ 按钮（添加/新建）
+ * 根据状态动态切换显示模式：
+ *
+ * 【模式1：图标模式】（有内容 && 不在下拉刷新 && 没有置顶消息）
+ * - 左侧：图标（点击打开 Drawer）
+ * - 中间：标题"三条(数字)"
+ * - 标题右侧：加载图标（loading/同步中）
+ * - 最右侧：+ 按钮
+ *
+ * 【模式2：头像模式】（有内容 && 有置顶消息）
+ * - 左侧：用户头像（点击打开 Drawer）
+ * - 中间：标题"三条(数字)"
+ * - 标题右侧：加载图标（loading/同步中，可选）
+ * - 最右侧：+ 按钮
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MessageTopAppBar(
     conversationCount: Int,
-    showLoading: Boolean,
+    showLoadingIcon: Boolean,
+    showAvatar: Boolean,
+    avatarUrl: String? = null,
+    onIconClick: () -> Unit,
     onAvatarClick: () -> Unit,
     onAddClick: () -> Unit,
 ) {
+    val context = LocalContext.current
+    
     CenterAlignedTopAppBar(
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
         navigationIcon = {
-            // 左侧：用户头像（圆形）
-            // TODO: 从用户信息获取头像，这里先用占位
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                // 点击头像打开 Drawer
-                //（外层 Box clickable 会更贴近 iOS/微信体验）
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable { onAvatarClick() },
-                    contentAlignment = Alignment.Center
-                ) {
-                // TODO: 加载用户头像图片
-                Text(
-                    text = "U",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+            if (showAvatar) {
+                // 模式2：显示用户头像
+                MessageTopAppBarAvatar(
+                    avatarUrl = avatarUrl,
+                    onClick = onAvatarClick,
                 )
-                }
+            } else {
+                // 模式1：显示图标
+                MessageTopAppBarIcon(
+                    onClick = onIconClick,
+                )
             }
         },
         title = {
@@ -216,7 +291,7 @@ private fun MessageTopAppBar(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
-                // 数字（未读/会话数量）
+                // 数字（会话数量）
                 if (conversationCount > 0) {
                     Text(
                         text = "($conversationCount)",
@@ -224,8 +299,8 @@ private fun MessageTopAppBar(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-                // 标题右侧：状态图标（loading/同步中）
-                if (showLoading) {
+                // 标题右侧：加载图标（loading/同步中）
+                if (showLoadingIcon) {
                     CircularProgressIndicator(
                         strokeWidth = 2.dp,
                         modifier = Modifier.size(16.dp),
@@ -245,6 +320,76 @@ private fun MessageTopAppBar(
             }
         }
     )
+}
+
+/**
+ * AppBar 左侧图标（模式1：无置顶消息时显示）
+ */
+@Composable
+private fun MessageTopAppBarIcon(
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        // TODO: 使用实际的图标资源
+        Icon(
+            painter = painterResource(id = R.drawable.ic_home_drawer_toggle_btn),
+            contentDescription = stringResource(id = R.string.social_dock_menu),
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+/**
+ * AppBar 左侧头像（模式2：有置顶消息时显示）
+ */
+@Composable
+private fun MessageTopAppBarAvatar(
+    avatarUrl: String?,
+    onClick: () -> Unit,
+) {
+    val context = LocalContext.current
+    
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        if (avatarUrl != null && avatarUrl.isNotBlank()) {
+            // 有头像 URL：加载网络图片，失败时显示默认头像
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(avatarUrl)
+                    .crossfade(true)
+                    .placeholder(com.joker.coolmall.feature.me.R.drawable.avatar_default)
+                    .error(com.joker.coolmall.feature.me.R.drawable.avatar_default)
+                    .build(),
+                contentDescription = stringResource(id = R.string.social_avatar_content_description),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            // 无头像 URL：显示默认头像
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(com.joker.coolmall.feature.me.R.drawable.avatar_default)
+                    .build(),
+                contentDescription = stringResource(id = R.string.social_avatar_content_description),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
 }
 
 

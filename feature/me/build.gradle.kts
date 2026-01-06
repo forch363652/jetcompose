@@ -11,7 +11,11 @@ android {
 }
 
 dependencies {
-    // 目前仅提供 Drawer 与占位页面；后续可按需补充依赖
+    implementation(project(":core:data"))
+    implementation(project(":core:designsystem"))
+    
+    // Coil for image loading
+    implementation(libs.coil.compose)
 }
 
 

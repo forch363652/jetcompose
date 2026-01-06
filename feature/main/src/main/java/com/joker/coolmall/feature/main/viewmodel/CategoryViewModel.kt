@@ -8,7 +8,7 @@ import com.joker.coolmall.core.model.entity.Category
 import com.joker.coolmall.core.model.entity.CategoryTree
 import com.joker.coolmall.feature.main.state.CategoryUiState
 import com.joker.coolmall.navigation.AppNavigator
-import com.joker.coolmall.navigation.routes.GoodsRoutes
+// import com.joker.coolmall.navigation.routes.GoodsRoutes // 已删除商品模块
 import com.joker.coolmall.result.ResultHandler
 import com.joker.coolmall.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -74,11 +74,13 @@ class CategoryViewModel @Inject constructor(
     }
 
     /**
-     * 跳转到商品分类页面
+     * 跳转到商品分类页面（已废弃 - 商品模块已删除）
      * @param categoryId 点击的分类ID
      */
+    @Deprecated("商品模块已删除")
     fun toGoodsCategoryPage(categoryId: Long) {
-        toPage("${GoodsRoutes.CATEGORY}?type_id=$categoryId")
+        // TODO: 社交应用不再需要商品分类
+        // toPage("${GoodsRoutes.CATEGORY}?type_id=$categoryId")
     }
 
     /**

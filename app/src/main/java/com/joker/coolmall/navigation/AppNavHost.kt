@@ -11,12 +11,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.joker.coolmall.feature.auth.navigation.authGraph
 import com.joker.coolmall.feature.common.navigation.commonGraph
-import com.joker.coolmall.feature.cs.navigation.csGraph
-import com.joker.coolmall.feature.goods.navigation.goodsGraph
 import com.joker.coolmall.feature.main.navigation.mainGraph
 import com.joker.coolmall.feature.me.navigation.meGraph
-import com.joker.coolmall.feature.order.navigation.orderGraph
-import com.joker.coolmall.feature.user.navigation.userGraph
 import com.joker.coolmall.navigation.routes.MainRoutes
 import kotlinx.coroutines.flow.collectLatest
 
@@ -78,11 +74,7 @@ fun AppNavHost(
                 navController,
                 this@SharedTransitionLayout
             )
-            goodsGraph(navController)
             authGraph(navController)
-            userGraph(navController, this@SharedTransitionLayout)
-            orderGraph(navController)
-            csGraph(navController)
             commonGraph(navController)
             // 我的（抽屉）二级页面
             meGraph(navController)

@@ -14,6 +14,10 @@
     <string name="me_placeholder_privacy">隐私防护页面（占位）</string>
     <string name="me_placeholder_account_security">账号安全页面（占位）</string>
     <string name="me_placeholder_settings">通用设置页面（占位）</string>
+
+    <!-- 无障碍支持 -->
+    <string name="me_drawer_avatar_content_description">用户头像</string>
+    <string name="me_drawer_user_id_format">ID: %1$s</string>
 </resources>
 
 

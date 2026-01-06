@@ -85,31 +85,25 @@ import com.joker.coolmall.feature.contacts.view.ContactsPagerScreen
 import com.joker.coolmall.feature.groupchats.view.GroupChatsPagerScreen
 import com.joker.coolmall.feature.groups.view.GroupsPagerScreen
 import com.joker.coolmall.feature.me.view.MeDrawerContent
+import com.joker.coolmall.feature.me.viewmodel.MeDrawerViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 
 /**
- * 主界面路由入口
+ * 主界面路由入口（已废弃，请使用新的 MainRoute）
+ * 
+ * @deprecated 使用新的 MainRoute（在 MainRoute.kt 中）替代
  */
+@Deprecated("使用新的 MainRoute（在 MainRoute.kt 中）替代", ReplaceWith("MainRoute(viewModel, onNavigate)"))
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-internal fun MainRoute(
+internal fun MainRouteOld(
     viewModel: MainViewModel = hiltViewModel(),
     onNavigate: (String) -> Unit = {},
 ) {
-    val isDockExpanded by viewModel.isDockExpanded.collectAsState()
-    val dockPageIndex by viewModel.dockPageIndex.collectAsState()
-
-    MainScreen(
-        isDockExpanded = isDockExpanded,
-        dockPageIndex = dockPageIndex,
-        onToggleDock = viewModel::toggleDock,
-        onCloseDock = viewModel::closeDock,
-        onDockPageSelected = viewModel::selectDockPage,
-        onDockPageChangedBySwipe = viewModel::setDockPageIndex,
-        onNavigate = onNavigate,
-    )
+    // 已废弃，请使用新的 MainRoute
 }
 
 /**
@@ -142,8 +136,12 @@ internal fun MainScreen(
         focusManager.clearFocus()
     }
 
-    // “我的”抽屉（右侧）开关
+    // “我的”抽屉（左侧）开关
     var isMeDrawerOpen by rememberSaveable { mutableStateOf(false) }
+
+    // MeDrawer ViewModel 和 UI 状态
+    val meDrawerViewModel: MeDrawerViewModel = hiltViewModel()
+    val meDrawerUiState by meDrawerViewModel.uiState.collectAsStateWithLifecycle()
 
     // dock 展开时，系统返回键回到消息页
     BackHandler(enabled = isDockExpanded) {
@@ -285,7 +283,7 @@ internal fun MainScreen(
                     state = dockPagerState,
                     modifier = Modifier.fillMaxSize()
                 ) { page ->
-                    when (page) {
+            when (page) {
                         MainViewModel.DockPage.CONTACTS.ordinal -> ContactsPagerScreen()
                         MainViewModel.DockPage.GROUP_CHATS.ordinal -> GroupChatsPagerScreen()
                         MainViewModel.DockPage.GROUPS.ordinal -> GroupsPagerScreen()
@@ -295,7 +293,7 @@ internal fun MainScreen(
         }
     }
 
-    // 右侧 Drawer：点击头像 / 右上角按钮打开（B1：push 到二级页面）
+    // 左侧 Drawer：点击头像 / 右上角按钮打开（B1：push 到二级页面）
     AnimatedVisibility(
         visible = isMeDrawerOpen,
         enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(160)),
@@ -319,31 +317,33 @@ internal fun MainScreen(
     AnimatedVisibility(
         visible = isMeDrawerOpen,
         enter = slideInHorizontally(
-            initialOffsetX = { it },
+            initialOffsetX = { -it }, // 从左侧进入（负数表示从左边）
             animationSpec = androidx.compose.animation.core.tween(220)
         ) + fadeIn(animationSpec = androidx.compose.animation.core.tween(160)),
         exit = slideOutHorizontally(
-            targetOffsetX = { it },
+            targetOffsetX = { -it }, // 向左侧退出
             animationSpec = androidx.compose.animation.core.tween(220)
         ) + fadeOut(animationSpec = androidx.compose.animation.core.tween(120)),
         modifier = Modifier.fillMaxSize()
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.CenterEnd
+            contentAlignment = Alignment.CenterStart // 内容靠左对齐
         ) {
             Surface(
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 8.dp,
-                shape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp),
+                shape = RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp), // 右上角和右下角圆角（左侧滑出）
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth(0.78f)
             ) {
                 MeDrawerContent(
+                    uiState = meDrawerUiState,
                     modifier = Modifier.fillMaxSize(),
                     onItemClick = { route ->
                         isMeDrawerOpen = false
+                        meDrawerViewModel.updateSelectedRoute(route)
                         onNavigate(route)
                     }
                 )
@@ -810,18 +810,13 @@ private fun ExpandedDockBar(
 @Composable
 private fun MessageRouteWrapper(
     viewModel: MessageViewModel = hiltViewModel(),
+    meDrawerViewModel: MeDrawerViewModel = hiltViewModel(),
     onOpenMeDrawer: () -> Unit = {},
     onScrollStateChange: (Boolean) -> Unit = {},
 ) {
-    val networkStatus by viewModel.networkStatus.collectAsStateWithLifecycle()
-    val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
-    val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
-
-    MessageScreen(
-        networkStatus = networkStatus,
-        connectionState = connectionState,
-        isSyncing = isSyncing,
-        onOpenNetworkSettings = {}, // TODO: 如需自定义设置入口，可在此注入
+    MessageRoute(
+        viewModel = viewModel,
+        meDrawerViewModel = meDrawerViewModel,
         onOpenMeDrawer = onOpenMeDrawer,
         onScrollStateChange = onScrollStateChange,
     )

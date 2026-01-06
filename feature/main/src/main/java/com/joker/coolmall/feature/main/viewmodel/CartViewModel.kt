@@ -11,7 +11,7 @@ import com.joker.coolmall.core.model.entity.SelectedGoods
 import com.joker.coolmall.core.util.storage.MMKVUtils
 import com.joker.coolmall.core.util.toast.ToastUtils
 import com.joker.coolmall.navigation.AppNavigator
-import com.joker.coolmall.navigation.routes.OrderRoutes
+// import com.joker.coolmall.navigation.routes.OrderRoutes // 已删除订单模块
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -263,8 +263,9 @@ class CartViewModel @Inject constructor(
             // 4. 缓存SelectedGoods
             MMKVUtils.putObject("selectedGoodsList", selectedGoodsList)
 
-            // 5. 导航到订单确认页面
-            super.toPage(OrderRoutes.CONFIRM)
+            // 5. 导航到订单确认页面（已废弃 - 订单模块已删除）
+            // TODO: 社交应用不再需要订单确认
+            // super.toPage(OrderRoutes.CONFIRM)
         }
     }
 

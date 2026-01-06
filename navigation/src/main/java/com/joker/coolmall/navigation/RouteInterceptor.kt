@@ -1,9 +1,6 @@
 package com.joker.coolmall.navigation
 
 import com.joker.coolmall.navigation.routes.AuthRoutes
-import com.joker.coolmall.navigation.routes.CsRoutes
-import com.joker.coolmall.navigation.routes.OrderRoutes
-import com.joker.coolmall.navigation.routes.UserRoutes
 
 /**
  * 路由拦截器
@@ -15,21 +12,8 @@ class RouteInterceptor {
      * 需要登录的页面路由集合
      * 在这里配置所有需要登录才能访问的页面
      */
-    private val loginRequiredRoutes = setOf(
-        // 用户模块 - 需要登录的页面
-        UserRoutes.PROFILE,
-        UserRoutes.SETTINGS,
-        UserRoutes.ADDRESS_LIST,
-        UserRoutes.ADDRESS_DETAIL,
-
-        // 订单模块 - 需要登录的页面
-        OrderRoutes.LIST,
-        OrderRoutes.CONFIRM,
-        OrderRoutes.DETAIL,
-        OrderRoutes.PAY,
-
-        // 客服模块 - 需要登录的页面
-        CsRoutes.CHAT
+    private val loginRequiredRoutes = setOf<String>(
+        // TODO: 后续添加需要登录的页面路由
     )
 
     /**

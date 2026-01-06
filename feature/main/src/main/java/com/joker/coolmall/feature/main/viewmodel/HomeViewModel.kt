@@ -15,7 +15,7 @@ import com.joker.coolmall.core.model.response.NetworkPageData
 import com.joker.coolmall.core.model.response.NetworkResponse
 import com.joker.coolmall.navigation.AppNavigator
 import com.joker.coolmall.navigation.routes.CommonRoutes
-import com.joker.coolmall.navigation.routes.GoodsRoutes
+// import com.joker.coolmall.navigation.routes.GoodsRoutes // 已删除商品模块
 import com.joker.coolmall.result.ResultHandler
 import com.joker.coolmall.result.asResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -106,44 +106,53 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * 跳转到商品搜索页面
+     * 跳转到商品搜索页面（已废弃 - 商品模块已删除）
      */
+    @Deprecated("商品模块已删除")
     fun toGoodsSearch() {
-        super.toPage(GoodsRoutes.SEARCH)
+        // TODO: 社交应用不再需要商品搜索
+        // super.toPage(GoodsRoutes.SEARCH)
     }
 
     /**
-     * 导航到商品详情页
+     * 导航到商品详情页（已废弃 - 商品模块已删除）
      */
+    @Deprecated("商品模块已删除")
     fun toGoodsDetail(goodsId: Long) {
-        super.toPage(GoodsRoutes.DETAIL, goodsId)
+        // TODO: 社交应用不再需要商品详情
+        // super.toPage(GoodsRoutes.DETAIL, goodsId)
     }
 
     /**
-     * 跳转到商品分类页面
+     * 跳转到商品分类页面（已废弃 - 商品模块已删除）
      * @param categoryId 点击的分类ID
      */
+    @Deprecated("商品模块已删除")
     fun toGoodsCategoryPage(categoryId: Long) {
-        val data = pageData.value
-        val childCategoryIds =
-            findChildCategoryIds(categoryId, data.categoryAll ?: emptyList())
-        // 如果有子分类，传递子分类ID
-        val typeIdParam = childCategoryIds.joinToString(",")
-        super.toPage("${GoodsRoutes.CATEGORY}?type_id=$typeIdParam")
+        // TODO: 社交应用不再需要商品分类
+        // val data = pageData.value
+        // val childCategoryIds =
+        //     findChildCategoryIds(categoryId, data.categoryAll ?: emptyList())
+        // val typeIdParam = childCategoryIds.joinToString(",")
+        // super.toPage("${GoodsRoutes.CATEGORY}?type_id=$typeIdParam")
     }
 
     /**
-     * 跳转到限时精选页面
+     * 跳转到限时精选页面（已废弃 - 商品模块已删除）
      */
+    @Deprecated("商品模块已删除")
     fun toFlashSalePage() {
-        super.toPage("${GoodsRoutes.CATEGORY}?featured=true")
+        // TODO: 社交应用不再需要限时精选
+        // super.toPage("${GoodsRoutes.CATEGORY}?featured=true")
     }
 
     /**
-     * 跳转到推荐商品页面
+     * 跳转到推荐商品页面（已废弃 - 商品模块已删除）
      */
+    @Deprecated("商品模块已删除")
     fun toRecommendPage() {
-        super.toPage("${GoodsRoutes.CATEGORY}?recommend=true")
+        // TODO: 社交应用不再需要推荐商品
+        // super.toPage("${GoodsRoutes.CATEGORY}?recommend=true")
     }
 
     /**
