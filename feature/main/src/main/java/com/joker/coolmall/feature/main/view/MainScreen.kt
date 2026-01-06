@@ -19,10 +19,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -36,22 +35,22 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -84,7 +84,6 @@ import com.joker.coolmall.feature.main.viewmodel.MessageViewModel
 import kotlinx.coroutines.launch
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import com.joker.coolmall.feature.main.viewmodel.MessageViewModel
 
 /**
  * 主界面路由入口
@@ -125,6 +124,16 @@ internal fun MainScreen(
 ) {
     // 协程作用域
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+
+    // 搜索框是否聚焦（等价于键盘态）：用于强制显示 Dock + 背景弱化
+    var isSearchFocused by remember { mutableStateOf(false) }
+
+    fun clearFocusAndKeyboard() {
+        keyboard?.hide()
+        focusManager.clearFocus()
+    }
 
     // dock 展开时，系统返回键回到消息页
     BackHandler(enabled = isDockExpanded) {
@@ -164,25 +173,25 @@ internal fun MainScreen(
             .exclude(WindowInsets.statusBars),
         containerColor = MaterialTheme.colorScheme.background, // 主界面背景色
         bottomBar = {
-            // 收缩态时显示 Dock 栏（根据滚动状态控制显示/隐藏）
-            // 展开态时 Dock 栏在 content 中显示，这里隐藏
+            // 收缩态：悬浮胶囊搜索 Dock（滚动可隐藏）
             AnimatedVisibility(
-                visible = (!isDockExpanded) && (isDockVisible || isDockExpanded),
+                // 输入聚焦时强制显示 Dock，避免被滚动逻辑隐藏导致“只剩键盘+空白”
+                visible = (!isDockExpanded) && (isDockVisible || isSearchFocused),
                 enter = slideInVertically(
                     initialOffsetY = { it },
-                    animationSpec = androidx.compose.animation.core.tween(300)
-                ) + fadeIn(),
+                    animationSpec = androidx.compose.animation.core.tween(260)
+                ) + fadeIn(animationSpec = androidx.compose.animation.core.tween(260)),
                 exit = slideOutVertically(
                     targetOffsetY = { it },
-                    animationSpec = androidx.compose.animation.core.tween(300)
-                ) + fadeOut()
+                    animationSpec = androidx.compose.animation.core.tween(220)
+                ) + fadeOut(animationSpec = androidx.compose.animation.core.tween(220))
             ) {
                 SocialDockBar(
-                    isExpanded = false, // bottomBar 中只显示收缩态
+                    isExpanded = false,
                     selectedIndex = dockPageIndex,
                     query = dockQuery,
                     onQueryChange = { dockQuery = it },
-                    onSearchSubmit = { text ->
+                    onSearchSubmit = {
                         // TODO: 这里做搜索：例如打开搜索页 / 弹窗 / 列表过滤
                     },
                     badgeCount = 6, // TODO: 接你的未读/提醒数字
@@ -190,7 +199,35 @@ internal fun MainScreen(
                     onCloseExpand = onCloseDock,
                     onContactsClick = { onDockPageSelected(MainViewModel.DockPage.CONTACTS.ordinal) },
                     onGroupChatsClick = { onDockPageSelected(MainViewModel.DockPage.GROUP_CHATS.ordinal) },
-                    onGroupsClick = { onDockPageSelected(MainViewModel.DockPage.GROUPS.ordinal) }
+                    onGroupsClick = { onDockPageSelected(MainViewModel.DockPage.GROUPS.ordinal) },
+                    onSearchFocusChange = { focused ->
+                        isSearchFocused = focused
+                        if (focused) {
+                            // 聚焦输入时保证 Dock 可见
+                            isDockVisible = true
+                        }
+                    }
+                )
+            }
+
+            // 展开态：iOS 风格悬浮 Dock（左侧 Tab + 右侧圆形返回按钮）
+            AnimatedVisibility(
+                visible = isDockExpanded,
+                enter = slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = androidx.compose.animation.core.tween(260)
+                ) + fadeIn(animationSpec = androidx.compose.animation.core.tween(260)),
+                exit = slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = androidx.compose.animation.core.tween(220)
+                ) + fadeOut(animationSpec = androidx.compose.animation.core.tween(220))
+            ) {
+                ExpandedDockBar(
+                    selectedIndex = dockPageIndex,
+                    onContactsClick = { onDockPageSelected(MainViewModel.DockPage.CONTACTS.ordinal) },
+                    onGroupChatsClick = { onDockPageSelected(MainViewModel.DockPage.GROUP_CHATS.ordinal) },
+                    onGroupsClick = { onDockPageSelected(MainViewModel.DockPage.GROUPS.ordinal) },
+                    onBackClick = onCloseDock,
                 )
             }
         }
@@ -201,114 +238,45 @@ internal fun MainScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
-            // 消息页（始终在底层）
-            MessageRouteWrapper(
-                onScrollStateChange = { isScrollingDown ->
-                    // 向下滚动时隐藏 Dock，向上滚动或顶部时显示 Dock
-                    isDockVisible = !isScrollingDown
-                }
-            )
-
-            // 展开 dock 时的遮罩（在消息页上方，Pager 下方，可点击关闭）
-            // 注意：遮罩不能覆盖 Pager，所以放在 Pager 之前
-            AnimatedVisibility(
-                visible = isDockExpanded,
-                enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(300)),
-                exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(300)),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.25f))
-                        .clickable { onCloseDock() }
+            if (!isDockExpanded) {
+                // 消息页（好友相关消息）
+                MessageRouteWrapper(
+                    onScrollStateChange = { isScrollingDown ->
+                        // 向下滚动时隐藏 Dock，向上滚动或顶部时显示 Dock
+                        isDockVisible = !isScrollingDown
+                    }
                 )
-            }
 
-            // 展开态：Dock 抽屉（Tab 栏 + 内容区，整体在遮罩上方）
-            AnimatedVisibility(
-                visible = isDockExpanded,
-                enter = slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = androidx.compose.animation.core.tween(300)
-                ) + fadeIn(animationSpec = androidx.compose.animation.core.tween(300)),
-                exit = slideOutVertically(
-                    targetOffsetY = { it },
-                    animationSpec = androidx.compose.animation.core.tween(300)
-                ) + fadeOut(animationSpec = androidx.compose.animation.core.tween(300)),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.6f) // Dock 抽屉占屏幕高度的 60%
-            ) {
-                Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(
-                        topStart = 16.dp,
-                        topEnd = 16.dp
-                    ),
-                    tonalElevation = 8.dp,
+                // 收起态 + 输入聚焦：弱化背景（图1效果），点击空白收起键盘
+                AnimatedVisibility(
+                    visible = isSearchFocused,
+                    enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(160)),
+                    exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(160)),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        // Tab 栏（与 SocialDockBar 展开态一致）
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // 联系人 Tab
-                            DockChipButton(
-                                selected = dockPageIndex == MainViewModel.DockPage.CONTACTS.ordinal,
-                                text = stringResource(id = R.string.social_dock_contacts),
-                                leadingIconDef = R.drawable.ic_new_contacts_def,
-                                leadingIconAct = R.drawable.ic_new_contacts_act,
-                                iconOnTop = true,
-                                onClick = { onDockPageSelected(MainViewModel.DockPage.CONTACTS.ordinal) }
-                            )
-                            // 群聊 Tab
-                            DockChipButton(
-                                selected = dockPageIndex == MainViewModel.DockPage.GROUP_CHATS.ordinal,
-                                text = stringResource(id = R.string.social_dock_group_chats),
-                                leadingIconDef = R.drawable.ic_new_group_def,
-                                leadingIconAct = R.drawable.ic_new_group_act,
-                                iconOnTop = true,
-                                onClick = { onDockPageSelected(MainViewModel.DockPage.GROUP_CHATS.ordinal) }
-                            )
-                            // 分组 Tab
-                            DockChipButton(
-                                selected = dockPageIndex == MainViewModel.DockPage.GROUPS.ordinal,
-                                text = stringResource(id = R.string.social_dock_groups),
-                                leadingIconDef = R.drawable.ic_new_cat_def,
-                                leadingIconAct = R.drawable.ic_new_cat_act,
-                                iconOnTop = true,
-                                onClick = { onDockPageSelected(MainViewModel.DockPage.GROUPS.ordinal) }
-                            )
-                            // 返回按钮
-                            DockChipButton(
-                                selected = false,
-                                text = stringResource(id = R.string.social_dock_back),
-                                leadingIcon = Icons.Default.ArrowBack,
-                                onClick = { onCloseDock() }
-                            )
-                        }
-
-                        // 内容区（HorizontalPager，支持左右滑动）
-                        HorizontalPager(
-                            userScrollEnabled = true,
-                            state = dockPagerState,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                        ) { page ->
-                            when (page) {
-                                MainViewModel.DockPage.CONTACTS.ordinal -> ContactsScreen()
-                                MainViewModel.DockPage.GROUP_CHATS.ordinal -> GroupChatsScreen()
-                                MainViewModel.DockPage.GROUPS.ordinal -> GroupsScreen()
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.10f))
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                clearFocusAndKeyboard()
                             }
-                        }
+                    )
+                }
+            } else {
+                // 展开态：整屏切换到 联系人/群聊/分组（支持左右滑动）
+                HorizontalPager(
+                    userScrollEnabled = true,
+                    state = dockPagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    when (page) {
+                        MainViewModel.DockPage.CONTACTS.ordinal -> ContactsScreen()
+                        MainViewModel.DockPage.GROUP_CHATS.ordinal -> GroupChatsScreen()
+                        MainViewModel.DockPage.GROUPS.ordinal -> GroupsScreen()
                     }
                 }
             }
@@ -346,6 +314,7 @@ private fun SocialDockBar(
     onContactsClick: () -> Unit,
     onGroupChatsClick: () -> Unit,
     onGroupsClick: () -> Unit,
+    onSearchFocusChange: (Boolean) -> Unit = {},
     // 文案（移除未使用的 textSearch 和 onSearchClick）
     placeholder: String = stringResource(id = R.string.social_dock_placeholder),
     textContacts: String = stringResource(id = R.string.social_dock_contacts),
@@ -365,6 +334,8 @@ private fun SocialDockBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            // 关键：键盘弹出时把 Dock 顶到键盘上方（图1效果）
+            .imePadding()
             .navigationBarsPadding()
     ) {
         AnimatedContent(
@@ -399,77 +370,14 @@ private fun SocialDockBar(
                             clearFocusAndKeyboard()
                         },
                         onClear = { onQueryChange("") },
+                        onFocusChange = onSearchFocusChange,
                         modifier = Modifier.weight(1f)
                     )
                 }
             } else {
-                // =========================
-                // 展开态：底部弹出抽屉面板（上圆角 16dp）
-                // =========================
-                Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 8.dp,
-                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column {
-                        // Tab 栏
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // 联系人 Tab（图标在上，文案在下）
-                            DockChipButton(
-                                selected = selectedIndex == MainViewModel.DockPage.CONTACTS.ordinal,
-                                text = textContacts,
-                                leadingIconDef = R.drawable.ic_new_contacts_def,
-                                leadingIconAct = R.drawable.ic_new_contacts_act,
-                                iconOnTop = true,
-                                onClick = {
-                                    clearFocusAndKeyboard()
-                                    onContactsClick()
-                                }
-                            )
-                            // 群聊 Tab（图标在上，文案在下）
-                            DockChipButton(
-                                selected = selectedIndex == MainViewModel.DockPage.GROUP_CHATS.ordinal,
-                                text = textGroupChats,
-                                leadingIconDef = R.drawable.ic_new_group_def,
-                                leadingIconAct = R.drawable.ic_new_group_act,
-                                iconOnTop = true,
-                                onClick = {
-                                    clearFocusAndKeyboard()
-                                    onGroupChatsClick()
-                                }
-                            )
-                            // 分组 Tab（图标在上，文案在下）
-                            DockChipButton(
-                                selected = selectedIndex == MainViewModel.DockPage.GROUPS.ordinal,
-                                text = textGroups,
-                                leadingIconDef = R.drawable.ic_new_cat_def,
-                                leadingIconAct = R.drawable.ic_new_cat_act,
-                                iconOnTop = true,
-                                onClick = {
-                                    clearFocusAndKeyboard()
-                                    onGroupsClick()
-                                }
-                            )
-                            // 返回按钮（图标在左，文案在右）
-                            DockChipButton(
-                                selected = false,
-                                text = textBack,
-                                leadingIcon = Icons.Default.ArrowBack,
-                                onClick = {
-                                    clearFocusAndKeyboard()
-                                    onCloseExpand()
-                                }
-                            )
-                        }
-                    }
-                }
+                // 目前展开态 Dock 由 MainScreen 的 bottomBar 负责渲染（见 ExpandedDockBar）
+                // 这里保留占位，避免误用
+                Spacer(modifier = Modifier.height(0.dp))
             }
         }
     }
@@ -552,6 +460,7 @@ private fun SearchPill(
     placeholder: String,
     onSearch: () -> Unit,
     onClear: () -> Unit,
+    onFocusChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -588,7 +497,8 @@ private fun SearchPill(
                 keyboardActions = KeyboardActions(onSearch = { onSearch() }),
                 modifier = Modifier
                     .weight(1f)
-                    .padding(vertical = 2.dp),
+                    .padding(vertical = 2.dp)
+                    .onFocusChanged { onFocusChange(it.isFocused) },
                 decorationBox = { innerTextField ->
                     if (query.isBlank()) {
                         Text(
@@ -731,25 +641,167 @@ private fun DockChipButton(
     }
 }
 
+/**
+ * 展开态底部 Dock（图2样式）
+ *
+ * - 左侧：一块悬浮胶囊 Tab 区（联系人/群聊/分组，图标在上文字在下）
+ * - 右侧：独立圆形返回按钮（收起 Dock 回消息页）
+ */
+@Composable
+private fun ExpandedDockBar(
+    selectedIndex: Int,
+    onContactsClick: () -> Unit,
+    onGroupChatsClick: () -> Unit,
+    onGroupsClick: () -> Unit,
+    onBackClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // 左侧：胶囊 Tab 区
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp,
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    DockChipButton(
+                        selected = selectedIndex == MainViewModel.DockPage.CONTACTS.ordinal,
+                        text = stringResource(id = R.string.social_dock_contacts),
+                        leadingIconDef = R.drawable.ic_new_contacts_def,
+                        leadingIconAct = R.drawable.ic_new_contacts_act,
+                        iconOnTop = true,
+                        onClick = onContactsClick
+                    )
+                    DockChipButton(
+                        selected = selectedIndex == MainViewModel.DockPage.GROUP_CHATS.ordinal,
+                        text = stringResource(id = R.string.social_dock_group_chats),
+                        leadingIconDef = R.drawable.ic_new_group_def,
+                        leadingIconAct = R.drawable.ic_new_group_act,
+                        iconOnTop = true,
+                        onClick = onGroupChatsClick
+                    )
+                    DockChipButton(
+                        selected = selectedIndex == MainViewModel.DockPage.GROUPS.ordinal,
+                        text = stringResource(id = R.string.social_dock_groups),
+                        leadingIconDef = R.drawable.ic_new_cat_def,
+                        leadingIconAct = R.drawable.ic_new_cat_act,
+                        iconOnTop = true,
+                        onClick = onGroupsClick
+                    )
+                }
+            }
+
+            // 右侧：圆形返回按钮
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp,
+                modifier = Modifier.size(44.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { onBackClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(id = R.string.social_dock_back),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun ContactsScreen() {
-    PlaceholderScreen(text = stringResource(id = R.string.social_contacts_placeholder))
+    SimpleTopPage(
+        title = stringResource(id = R.string.social_dock_contacts),
+        bodyText = stringResource(id = R.string.social_contacts_placeholder),
+    )
 }
 
 @Composable
 private fun GroupChatsScreen() {
-    PlaceholderScreen(text = stringResource(id = R.string.social_group_chats_placeholder))
+    SimpleTopPage(
+        title = stringResource(id = R.string.social_dock_group_chats),
+        bodyText = stringResource(id = R.string.social_group_chats_placeholder),
+    )
 }
 
 @Composable
 private fun GroupsScreen() {
-    PlaceholderScreen(text = stringResource(id = R.string.social_groups_placeholder))
+    SimpleTopPage(
+        title = stringResource(id = R.string.social_dock_groups),
+        bodyText = stringResource(id = R.string.social_groups_placeholder),
+    )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PlaceholderScreen(text: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-        androidx.compose.material3.Text(text = text)
+private fun SimpleTopPage(
+    title: String,
+    bodyText: String,
+) {
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                actions = {
+                    // 预留：后续可放“新建/添加”等入口
+                    IconButton(onClick = {}) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null
+                        )
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(padding),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = bodyText,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
     }
 }
 
