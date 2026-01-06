@@ -106,7 +106,29 @@ class MessageViewModel @Inject constructor(
             // _conversations.value = result
             
             // 临时：模拟数据（用于测试）
-            _conversations.value = emptyList()
+            // 创建测试会话列表，确保至少有一个置顶消息，以便显示头像
+            _conversations.value = listOf(
+                ConversationItem(
+                    id = "1",
+                    name = "测试会话1",
+                    avatarUrl = null,
+                    lastMessage = "这是一条测试消息",
+                    timestamp = System.currentTimeMillis(),
+                    unreadCount = 0,
+                    isGroup = false,
+                    isPinned = true, // 置顶，确保显示头像
+                ),
+                ConversationItem(
+                    id = "2",
+                    name = "测试会话2",
+                    avatarUrl = null,
+                    lastMessage = "另一条测试消息",
+                    timestamp = System.currentTimeMillis() - 3600000,
+                    unreadCount = 3,
+                    isGroup = false,
+                    isPinned = false,
+                ),
+            )
         }
     }
 
