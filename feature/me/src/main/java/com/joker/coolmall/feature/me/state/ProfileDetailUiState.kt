@@ -60,9 +60,14 @@ data class ProfileDetailUiState(
     val location: String? = null,
 
     /**
-     * 错误消息
+     * 错误消息（友好的用户提示）
      */
     val errorMessage: String? = null,
+
+    /**
+     * 是否可以重试
+     */
+    val canRetry: Boolean = false,
 ) {
     /**
      * 性别显示文本

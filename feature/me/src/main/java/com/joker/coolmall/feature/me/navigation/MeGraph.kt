@@ -22,6 +22,13 @@ fun NavGraphBuilder.meGraph(
     profileDetailScreen(
         onBackClick = { navController.popBackStack() }
     )
+    santiaoIdDetailScreen(
+        onBackClick = { navController.popBackStack() },
+        onModifyClick = { santiaoId ->
+            // TODO: 实现修改ID页面的导航
+            // navController.navigate(...)
+        }
+    )
 }
 
 

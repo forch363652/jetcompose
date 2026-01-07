@@ -29,6 +29,14 @@
     <string name="me_profile_gender">性别</string>
     <string name="me_profile_email">邮箱</string>
     <string name="me_profile_location">所在地</string>
+    
+    <!-- 三条ID详情页面 -->
+    <string name="me_santiao_id_detail_title">三条ID</string>
+    <string name="me_santiao_id_detail_introduction">三条ID是您的唯一标识，可用于添加好友和搜索。ID一旦设置后不可修改，请谨慎设置。</string>
+    <string name="me_santiao_id_detail_modify">去修改</string>
+    <string name="me_santiao_id_detail_no_id">暂无</string>
+    <string name="me_santiao_id_detail_format">三条ID: %1$s</string>
+    <string name="me_santiao_id_detail_cannot_modify">当前无可修改的ID</string>
 </resources>
 
 

@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -49,7 +50,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.joker.coolmall.core.designsystem.theme.AppTheme
+import com.joker.coolmall.core.model.preview.previewUser
 import com.joker.coolmall.feature.me.R
+import com.joker.coolmall.feature.me.mapper.UserMapper.toUiState
 import com.joker.coolmall.feature.me.viewmodel.ProfileDetailViewModel
 
 /**
@@ -67,6 +70,10 @@ fun ProfileDetailRoute(
         uiState = uiState,
         onBackClick = onBackClick,
         onTogglePhoneVisibility = { viewModel.togglePhoneVisibility() },
+        onRetry = { viewModel.retry() },
+        onSantiaoIdClick = { santiaoId ->
+            viewModel.navigateToSantiaoIdDetail(santiaoId)
+        },
     )
 }
 
@@ -78,6 +85,8 @@ private fun ProfileDetailScreen(
     uiState: com.joker.coolmall.feature.me.state.ProfileDetailUiState,
     onBackClick: () -> Unit,
     onTogglePhoneVisibility: () -> Unit,
+    onRetry: () -> Unit = {},
+    onSantiaoIdClick: (String) -> Unit = {},
 ) {
     Box(
         modifier = Modifier
@@ -132,18 +141,85 @@ private fun ProfileDetailScreen(
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
-                if (uiState.isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+                when {
+                    uiState.isLoading -> {
+                        // 加载中：显示加载指示器
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
-                } else {
-                    ProfileContent(
-                        uiState = uiState,
-                        onTogglePhoneVisibility = onTogglePhoneVisibility,
-                    )
+                    uiState.errorMessage != null && uiState.canRetry -> {
+                        // 错误状态：显示错误信息和重试按钮
+                        // 如果之前有数据，保留显示；如果没有数据，显示错误提示
+                        if (uiState.userName == null && uiState.avatarUrl == null) {
+                            // 没有数据，显示完整错误页面
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    modifier = Modifier.padding(24.dp)
+                                ) {
+                                    Text(
+                                        text = uiState.errorMessage,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                    TextButton(onClick = onRetry) {
+                                        Text("重试")
+                                    }
+                                }
+                            }
+                        } else {
+                            // 有数据，在顶部显示错误提示和重试按钮
+                            Column(
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                // 错误提示栏
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(MaterialTheme.colorScheme.errorContainer)
+                                        .padding(16.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = uiState.errorMessage,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onErrorContainer,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        TextButton(onClick = onRetry) {
+                                            Text("重试")
+                                        }
+                                    }
+                                }
+                                // 显示之前的数据
+                                ProfileContent(
+                                    uiState = uiState,
+                                    onTogglePhoneVisibility = onTogglePhoneVisibility,
+                                    onSantiaoIdClick = onSantiaoIdClick,
+                                )
+                            }
+                        }
+                    }
+                    else -> {
+                        // 成功状态：显示内容
+                        ProfileContent(
+                            uiState = uiState,
+                            onTogglePhoneVisibility = onTogglePhoneVisibility,
+                            onSantiaoIdClick = onSantiaoIdClick,
+                        )
+                    }
                 }
             }
         }
@@ -157,6 +233,7 @@ private fun ProfileDetailScreen(
 private fun ProfileContent(
     uiState: com.joker.coolmall.feature.me.state.ProfileDetailUiState,
     onTogglePhoneVisibility: () -> Unit,
+    onSantiaoIdClick: (String) -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -257,7 +334,12 @@ private fun ProfileContent(
         ProfileItem(
             label = stringResource(R.string.me_profile_santiao_id),
             value = uiState.imid ?: uiState.santiaoId ?: "--",
-            onClick = { /* TODO: 跳转到三条ID详情 */ }
+            onClick = {
+                val santiaoId = uiState.imid ?: uiState.santiaoId
+                if (!santiaoId.isNullOrBlank()) {
+                    onSantiaoIdClick(santiaoId)
+                }
+            }
         )
 
         // 下划线分隔
@@ -367,20 +449,15 @@ private fun ProfileItem(
 @Composable
 private fun ProfileDetailScreenPreview() {
     AppTheme {
+        // 使用 UserMapper 进行状态转换
+        val previewUiState = previewUser.toUiState(isPhoneVisible = false)
+        
         ProfileDetailScreen(
-            uiState = com.joker.coolmall.feature.me.state.ProfileDetailUiState(
-                avatarUrl = null,
-                userName = "热心网友",
-                santiaoId = "223455",
-                phone = "38112345620",
-                isPhoneVisible = false,
-                imid = "imid727828",
-                gender = 2,
-                email = "1014945530@qq.com",
-                location = null,
-            ),
+            uiState = previewUiState,
             onBackClick = {},
             onTogglePhoneVisibility = {},
+            onRetry = {},
+            onSantiaoIdClick = {},
         )
     }
 }

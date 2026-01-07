@@ -8,6 +8,7 @@ import com.joker.coolmall.feature.me.view.MomentsScreen
 import com.joker.coolmall.feature.me.view.NotificationsScreen
 import com.joker.coolmall.feature.me.view.PrivacyScreen
 import com.joker.coolmall.feature.me.view.ProfileDetailRoute
+import com.joker.coolmall.feature.me.view.SantiaoIdDetailRoute
 import com.joker.coolmall.feature.me.view.SettingsScreen
 import com.joker.coolmall.feature.me.view.StatusScreen
 import com.joker.coolmall.navigation.routes.MeRoutes
@@ -45,6 +46,18 @@ fun NavGraphBuilder.profileDetailScreen(
 ) {
     composable(route = MeRoutes.PROFILE_DETAIL) {
         ProfileDetailRoute(onBackClick = onBackClick)
+    }
+}
+
+fun NavGraphBuilder.santiaoIdDetailScreen(
+    onBackClick: () -> Unit,
+    onModifyClick: (String) -> Unit = {},
+) {
+    composable(route = MeRoutes.SANTIAO_ID_DETAIL) {
+        SantiaoIdDetailRoute(
+            onBackClick = onBackClick,
+            onModifyClick = onModifyClick,
+        )
     }
 }
 
