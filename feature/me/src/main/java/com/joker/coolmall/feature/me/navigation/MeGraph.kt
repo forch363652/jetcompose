@@ -2,6 +2,8 @@ package com.joker.coolmall.feature.me.navigation
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import com.joker.coolmall.feature.me.navigation.qrCodeScreen
+import com.joker.coolmall.navigation.routes.MeRoutes
 
 /**
  * 我的（抽屉）模块导航图
@@ -25,9 +27,22 @@ fun NavGraphBuilder.meGraph(
     santiaoIdDetailScreen(
         onBackClick = { navController.popBackStack() },
         onModifyClick = { santiaoId ->
-            // TODO: 实现修改ID页面的导航
-            // navController.navigate(...)
+            navController.navigate("${MeRoutes.MODIFY_SANTIAO_ID}?currentId=$santiaoId") {
+                launchSingleTop = true
+            }
         }
+    )
+    
+    modifySantiaoIdScreen(
+        onBackClick = { navController.popBackStack() },
+        onSaveSuccess = {
+            // 保存成功后，可以刷新数据或显示提示
+            // TODO: 可以在这里添加刷新逻辑
+        }
+    )
+    
+    qrCodeScreen(
+        onBackClick = { navController.popBackStack() }
     )
 }
 

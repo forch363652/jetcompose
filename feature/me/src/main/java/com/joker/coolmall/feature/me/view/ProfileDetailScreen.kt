@@ -74,6 +74,13 @@ fun ProfileDetailRoute(
         onSantiaoIdClick = { santiaoId ->
             viewModel.navigateToSantiaoIdDetail(santiaoId)
         },
+        onQRCodeClick = {
+            viewModel.navigateToQRCode(
+                qrCodeUrl = uiState.qrCodeUrl,
+                userName = uiState.userName,
+                avatarUrl = uiState.avatarUrl
+            )
+        },
     )
 }
 
@@ -87,6 +94,7 @@ private fun ProfileDetailScreen(
     onTogglePhoneVisibility: () -> Unit,
     onRetry: () -> Unit = {},
     onSantiaoIdClick: (String) -> Unit = {},
+    onQRCodeClick: () -> Unit = {},
 ) {
     Box(
         modifier = Modifier
@@ -208,6 +216,7 @@ private fun ProfileDetailScreen(
                                     uiState = uiState,
                                     onTogglePhoneVisibility = onTogglePhoneVisibility,
                                     onSantiaoIdClick = onSantiaoIdClick,
+                                    onQRCodeClick = onQRCodeClick,
                                 )
                             }
                         }
@@ -218,6 +227,7 @@ private fun ProfileDetailScreen(
                             uiState = uiState,
                             onTogglePhoneVisibility = onTogglePhoneVisibility,
                             onSantiaoIdClick = onSantiaoIdClick,
+                            onQRCodeClick = onQRCodeClick,
                         )
                     }
                 }
@@ -234,6 +244,7 @@ private fun ProfileContent(
     uiState: com.joker.coolmall.feature.me.state.ProfileDetailUiState,
     onTogglePhoneVisibility: () -> Unit,
     onSantiaoIdClick: (String) -> Unit = {},
+    onQRCodeClick: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -361,7 +372,7 @@ private fun ProfileContent(
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             },
-            onClick = { /* TODO: 显示二维码大图 */ }
+            onClick = onQRCodeClick
         )
 
         // 性别

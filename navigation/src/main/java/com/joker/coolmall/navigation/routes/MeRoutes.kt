@@ -34,6 +34,17 @@ object MeRoutes {
 
     /** 三条ID详情 */
     const val SANTIAO_ID_DETAIL = "$ME_ROUTE/santiao_id_detail"
+
+    /** 修改三条ID */
+    const val MODIFY_SANTIAO_ID = "$ME_ROUTE/modify_santiao_id"
+
+    /** 我的二维码 */
+    const val QR_CODE = "$ME_ROUTE/qr_code"
+
+    // 二维码页面参数
+    const val QR_CODE_URL_ARG = "qrCodeUrl"
+    const val QR_CODE_USER_NAME_ARG = "userName"
+    const val QR_CODE_AVATAR_ARG = "avatar"
 }
 
 

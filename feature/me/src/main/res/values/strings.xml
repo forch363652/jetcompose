@@ -37,6 +37,19 @@
     <string name="me_santiao_id_detail_no_id">暂无</string>
     <string name="me_santiao_id_detail_format">三条ID: %1$s</string>
     <string name="me_santiao_id_detail_cannot_modify">当前无可修改的ID</string>
+    
+    <!-- 修改三条ID页面 -->
+    <string name="me_modify_santiao_id_title">设置ID</string>
+    <string name="me_modify_santiao_id_tip">ID必须同时包含字母和数字，长度为1-18个字符</string>
+    <string name="me_modify_santiao_id_input_hint">请输入ID</string>
+    <string name="me_modify_santiao_id_save">保存</string>
+    <string name="me_modify_santiao_id_clear">清除</string>
+    
+    <!-- 二维码页面 -->
+    <string name="me_qrcode_title">我的二维码</string>
+    <string name="me_qrcode_content_description">二维码</string>
+    <string name="me_qrcode_save">保存二维码</string>
+    <string name="me_qrcode_tip">扫一扫上面的二维码，加我为好友</string>
 </resources>
 
 

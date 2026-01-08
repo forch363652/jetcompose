@@ -133,5 +133,24 @@ class ProfileDetailViewModel @Inject constructor(
     fun navigateToSantiaoIdDetail(santiaoId: String) {
         toPage(MeRoutes.SANTIAO_ID_DETAIL, mapOf("santiaoId" to santiaoId))
     }
+
+    /**
+     * 导航到二维码页面
+     * 
+     * @param qrCodeUrl 二维码URL（可选）
+     * @param userName 用户名（可选）
+     * @param avatarUrl 头像URL（可选）
+     */
+    fun navigateToQRCode(
+        qrCodeUrl: String? = null,
+        userName: String? = null,
+        avatarUrl: String? = null
+    ) {
+        val params = mutableMapOf<String, String>()
+        qrCodeUrl?.let { params[MeRoutes.QR_CODE_URL_ARG] = it }
+        userName?.let { params[MeRoutes.QR_CODE_USER_NAME_ARG] = it }
+        avatarUrl?.let { params[MeRoutes.QR_CODE_AVATAR_ARG] = it }
+        toPage(MeRoutes.QR_CODE, params)
+    }
 }
 

@@ -6,6 +6,7 @@ import com.joker.coolmall.core.database.AppDatabase
 import com.joker.coolmall.core.database.dao.CartDao
 import com.joker.coolmall.core.database.dao.FootprintDao
 import com.joker.coolmall.core.database.dao.SearchHistoryDao
+import com.joker.coolmall.core.database.dao.UserProfileDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -60,5 +61,14 @@ object DatabaseModule {
     @Singleton
     fun provideSearchHistoryDao(database: AppDatabase): SearchHistoryDao {
         return database.searchHistoryDao()
+    }
+
+    /**
+     * 提供用户资料DAO
+     */
+    @Provides
+    @Singleton
+    fun provideUserProfileDao(database: AppDatabase): UserProfileDao {
+        return database.userProfileDao()
     }
 }
